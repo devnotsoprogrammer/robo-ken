@@ -1,5 +1,3 @@
-
-
 const { Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -79,7 +77,9 @@ function prefixHandler(client, prefixPath) {
     };
 
     const loadAllCommands = (commandDir) => {
+        log(`Loading prefix commands from directory: ${chalk.cyan(commandDir)}`, 'INFO');
         const commandFiles = fs.readdirSync(commandDir);
+
         commandFiles.forEach(file => {
             const filePath = path.join(commandDir, file);
             const stat = fs.statSync(filePath);
@@ -94,10 +94,14 @@ function prefixHandler(client, prefixPath) {
 
     loadAllCommands(prefixPath);
 
+    // Debug: List all loaded commands
+    log(`Loaded ${chalk.green(client.prefix.size)} prefix commands: ${Array.from(client.prefix.keys()).join(', ')}`, 'INFO');
+
     const watcher = chokidar.watch(prefixPath, {
         persistent: true,
         ignoreInitial: true,
         awaitWriteFinish: true,
+        depth: 99 // Allow deep directory watching
     });
 
     const debouncedLoadCommand = debounce(loadCommand, 500);

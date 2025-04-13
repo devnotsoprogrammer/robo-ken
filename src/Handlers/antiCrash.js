@@ -1,5 +1,5 @@
 const axios = require('axios');
-const config = require('../../config.json');
+const config = require('../config');
 const { default: chalk } = require('chalk');
 const process = require('node:process');
 const fs = require('fs');

@@ -137,6 +137,13 @@ dist
 
 # Code Editor directories
 .vscode
+package-lock.json
+testtoken.js
 
 # Temporary Ignore files
 server
+
+#Custom Ignore files
+package-lock.json
+*.txt
+errors

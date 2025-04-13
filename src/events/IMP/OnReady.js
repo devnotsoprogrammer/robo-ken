@@ -1,7 +1,7 @@
 const { ActivityType } = require("discord.js");
 // @ts-ignore
-const {prefixHandler} = require('../../Handlers/prefixcommand');
-const {handleCommands} = require('../../Handlers/commandHandler');
+const { prefixHandler } = require('../../Handlers/prefixcommand');
+const { handleCommands } = require('../../Handlers/HandleCommands');
 const { default: chalk } = require('chalk');
 const path = require('path');
 const fs = require('fs')
@@ -40,9 +40,17 @@ module.exports = {
             status: 'dnd'
         })
 
-        prefixHandler(client, path.join(process.cwd(), 'src/messages'));
-        handleCommands(client, path.join(process.cwd(), 'src/commands'));
+        // Initialize prefix commands from the messages directory (will search recursively)
+        // prefixHandler(client, path.join(process.cwd(), 'src/messages'));
 
+        // // Create commands directory if it doesn't exist
+        // const commandsDir = path.join(process.cwd(), 'src/commands');
+        // if (!fs.existsSync(commandsDir)) {
+        //     fs.mkdirSync(commandsDir, { recursive: true });
+        //     console.log(chalk.yellow.bold('WARNING: ') + 'Commands directory created. Please add slash commands to this directory.');
+        // }
 
+        // // Initialize slash commands (will search recursively)
+        // handleCommands(client, commandsDir);
     }
 }

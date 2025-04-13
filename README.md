@@ -56,7 +56,7 @@ Ensure you are using the following versions for compatibility:
   - `nodemon`: 3.1.9
 
 ## License
-This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT. See the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.

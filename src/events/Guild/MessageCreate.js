@@ -1,11 +1,10 @@
-const chalk = require("chalk");
-const config = require('../../../config.json');
+const { default: chalk } = require("chalk");
+const config = require('../../config');
 const { EmbedBuilder } = require('discord.js');
 const { getSimilarCommands } = require('../../Handlers/Similarity');
 const path = require('path');
 const fs = require('fs');
 const { RateLimiter } = require('discord.js-rate-limiter');
-
 const errorsDir = path.join(__dirname, '../../../logs/errors');
 
 function ensureErrorDirectoryExists() {
@@ -38,6 +37,10 @@ module.exports = {
         const args = content.slice(prefix.length).trim().split(/ +/);
         const commandName = args.shift().toLowerCase();
 
+        if (!client.prefix || client.prefix.size === 0) {
+            return;
+        }
+
         let command = client.prefix.get(commandName);
         if (!command) {
             command = Array.from(client.prefix.values()).find(
@@ -46,8 +49,6 @@ module.exports = {
         }
 
         if (!command) {
-            console.log(chalk.yellow.bold('WARNING: ') + `Unknown command: "${commandName}"`);
-
             const similarCommands = getSimilarCommands(commandName, Array.from(client.prefix.values()));
             if (similarCommands.length > 0) {
                 const embed = new EmbedBuilder()
@@ -148,8 +149,8 @@ module.exports = {
         }
 
         let rateLimiter = new RateLimiter(1, 2000);
-        let limited = rateLimiter.take(msg.author.id);
-        if (limited && !config.bot.ownerId.includes(message.author.id)) {
+        let limited = rateLimiter.take(message.author.id);
+        if (limited && message.author.id !== config.bot.ownerId) {
             const embed = new EmbedBuilder()
                 .setColor('Blue')
                 .setDescription(`\`❌\` | You are being rate limited. Please try again later.`)
@@ -160,7 +161,14 @@ module.exports = {
         }
 
         try {
-            await command.run(client, message, args);
+            if (command.execute) {
+                await command.execute(message, args);
+            } else if (command.run) {
+                await command.run(client, message, args);
+            } else {
+                return;
+            }
+
             const logEmbed = new EmbedBuilder()
                 .setColor('Blue')
                 .setTitle('Command Executed')

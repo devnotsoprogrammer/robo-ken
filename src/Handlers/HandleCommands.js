@@ -1,10 +1,23 @@
-
 const { REST, Routes, Collection } = require('discord.js');
 const fs = require('fs');
 const { default: chalk } = require('chalk');
-const config = require('../../config.json');
+const config = require('../config');
 const path = require('path');
 const chokidar = require('chokidar');
+
+// Add debounce function
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
 const activities = [];
 const addActivity = (action, filePath) => {
     const timestamp = new Date().toISOString();
@@ -54,7 +67,9 @@ const isConfigIncomplete = (key, value, placeholderTokens) => {
 };
 
 const getAllCommandFiles = (dirPath, arrayOfFiles = []) => {
+    log(`Searching for slash commands in: ${chalk.cyan(dirPath)}`, 'INFO');
     const files = fs.readdirSync(dirPath);
+
     files.forEach(file => {
         const filePath = path.join(dirPath, file);
         if (fs.statSync(filePath).isDirectory()) {
@@ -75,6 +90,7 @@ const loadCommand = (client, filePath) => {
 
         delete require.cache[require.resolve(filePath)];
         const command = require(filePath);
+        log(`Loaded slash command file: ${chalk.cyan(formatFilePath(filePath))}`, 'INFO');
 
         if (!command.data || !command.data.name || typeof command.data.name !== 'string') {
             log(`The command file "${formatFilePath(filePath)}" is missing a valid name property.`, 'ERROR');
@@ -82,6 +98,7 @@ const loadCommand = (client, filePath) => {
         }
 
         client.commands.set(command.data.name, command);
+        log(`Added slash command to collection: ${chalk.green(command.data.name)}`, 'SUCCESS');
         return command;
 
     } catch (error) {
@@ -93,100 +110,108 @@ const loadCommand = (client, filePath) => {
 };
 
 const loadCommands = (client, commandsPath) => {
+    log(`Loading slash commands from: ${chalk.cyan(commandsPath)}`, 'INFO');
     const globalCommandArray = [];
     const devCommandArray = [];
 
     const commandFiles = getAllCommandFiles(commandsPath);
+    log(`Found ${chalk.cyan(commandFiles.length)} slash command files`, 'INFO');
 
     for (const filePath of commandFiles) {
-        const command = loadCommand(client, filePath);
-        if (command) {
-            if (command.devOnly) {
-                devCommandArray.push(command.data.toJSON());
-            } else {
-                globalCommandArray.push(command.data.toJSON());
+        try {
+            const command = loadCommand(client, filePath);
+            if (command) {
+                if (command.devOnly) {
+                    devCommandArray.push(command.data.toJSON());
+                    log(`Added to dev commands: ${chalk.green(command.data.name)}`, 'INFO');
+                } else {
+                    globalCommandArray.push(command.data.toJSON());
+                    log(`Added to global commands: ${chalk.green(command.data.name)}`, 'INFO');
+                }
             }
+        } catch (error) {
+            log(`Error loading command from "${formatFilePath(filePath)}".`, 'ERROR');
+            console.error(error);
+            logErrorToFile(error);
         }
     }
 
+    log(`Loaded ${chalk.green(globalCommandArray.length)} global commands and ${chalk.green(devCommandArray.length)} dev commands`, 'INFO');
     return { globalCommandArray, devCommandArray };
 };
 
 const unregisterCommand = async (commandName, rest, config, devCommandArray) => {
     try {
-        log(`Unregistering global command: ${commandName}`, 'INFO');
+        // Unregister from global commands
+        await rest.delete(
+            Routes.applicationCommand(config.bot.id, commandName)
+        );
+        log(`Unregistered global command: ${chalk.red(commandName)}`, 'SUCCESS');
 
-
-
-        const globalCommands = await rest.get(Routes.applicationCommands(config.bot.id));
-        const commandToDelete = globalCommands.find(cmd => cmd.name === commandName);
-        if (commandToDelete) {
-            await rest.delete(Routes.applicationCommand(config.bot.id, commandToDelete.id));
-            log(`Successfully unregistered global command: ${commandName}`, 'SUCCESS');
-        }
-
-
-        if (devCommandArray.length > 0 && config.bot.developerCommandsServerIds && config.bot.developerCommandsServerIds.length > 0) {
-            for (const serverId of config.bot.developerCommandsServerIds) {
-                const guildCommands = await rest.get(Routes.applicationGuildCommands(config.bot.id, serverId));
-                const guildCommandToDelete = guildCommands.find(cmd => cmd.name === commandName);
-                if (guildCommandToDelete) {
-                    await rest.delete(Routes.applicationGuildCommand(config.bot.id, serverId, guildCommandToDelete.id));
-                    log(`Successfully unregistered command: ${commandName} from guild ${serverId}`, 'SUCCESS');
-                }
+        // Unregister from dev guilds
+        for (const guildId of config.bot.developerCommandsServerIds) {
+            try {
+                await rest.delete(
+                    Routes.applicationGuildCommand(config.bot.id, guildId, commandName)
+                );
+                log(`Unregistered dev command from guild ${chalk.yellow(guildId)}: ${chalk.red(commandName)}`, 'SUCCESS');
+            } catch (error) {
+                log(`Failed to unregister dev command from guild ${chalk.yellow(guildId)}: ${chalk.red(commandName)}`, 'ERROR');
+                console.error(error);
             }
         }
     } catch (error) {
-        log(`Failed to unregister command: ${commandName}`, 'ERROR');
+        log(`Failed to unregister command: ${chalk.red(commandName)}`, 'ERROR');
         console.error(error);
-        logErrorToFile(error)
     }
 };
 
 const registerCommands = async (globalCommandArray, devCommandArray, rest, config) => {
-    if (globalCommandArray.length > 0) {
-        try {
-            log('Started refreshing global application (/) commands.', 'INFO');
+    try {
+        log(`Attempting to register ${chalk.cyan(globalCommandArray.length)} global commands and ${chalk.cyan(devCommandArray.length)} dev commands`, 'INFO');
+        log(`Bot ID: ${chalk.cyan(config.bot.id)}`, 'INFO');
+
+        // Register global commands
+        if (globalCommandArray.length > 0) {
+            log(`Registering global commands: ${chalk.cyan(globalCommandArray.map(cmd => cmd.name).join(', '))}`, 'INFO');
             await rest.put(
                 Routes.applicationCommands(config.bot.id),
                 { body: globalCommandArray }
             );
-            log('Successfully reloaded global application (/) commands.', 'SUCCESS');
-        } catch (error) {
-            log('Failed to reload global application (/) commands.', 'ERROR');
-            if (error.code === 10002) {
-                console.error(chalk.red.bold('ERROR: ') + 'Unknown Application. Please check the Discord bot ID provided in your configuration.');
-                logErrorToFile(error)
-            } else {
-                console.error(chalk.red.bold('ERROR: ') + 'Failed to register commands:', error.message);
-                logErrorToFile(error)
-            }
+            log(`Registered ${chalk.green(globalCommandArray.length)} global commands.`, 'SUCCESS');
+        } else {
+            log('No global commands to register.', 'WARNING');
         }
-    }
 
-    if (devCommandArray.length > 0 && config.bot.developerCommandsServerIds && config.bot.developerCommandsServerIds.length > 0) {
-        const promises = config.bot.developerCommandsServerIds.map(async (serverId) => {
-            try {
-                log(`Started refreshing developer guild (/) commands for server: ${serverId}`, 'INFO');
-                await rest.put(
-                    Routes.applicationGuildCommands(config.bot.id, serverId),
-                    { body: devCommandArray }
-                );
-                log(`Successfully reloaded developer guild (/) commands for server: ${serverId}`, 'SUCCESS');
-            } catch (error) {
-                log(`Failed to reload developer guild (/) commands for server: ${serverId}`, 'ERROR');
-                console.error(error);
-                logErrorToFile(error)
-            }
-        });
+        // Register dev commands
+        if (devCommandArray.length > 0 && config.bot.developerCommandsServerIds.length > 0) {
+            log(`Registering dev commands to ${chalk.cyan(config.bot.developerCommandsServerIds.length)} guilds`, 'INFO');
+            const promises = config.bot.developerCommandsServerIds.map(async (guildId) => {
+                try {
+                    await rest.put(
+                        Routes.applicationGuildCommands(config.bot.id, guildId),
+                        { body: devCommandArray }
+                    );
+                    log(`Registered ${chalk.green(devCommandArray.length)} dev commands to guild ${chalk.yellow(guildId)}.`, 'SUCCESS');
+                } catch (error) {
+                    log(`Failed to register dev commands to guild ${chalk.yellow(guildId)}.`, 'ERROR');
+                    console.error(error);
+                }
+            });
 
-        await Promise.all(promises);
-    } else {
-        log('No developer guild server IDs provided, or no developer commands to register.', 'WARNING');
+            await Promise.all(promises);
+        } else {
+            log('No developer guild server IDs provided, or no developer commands to register.', 'WARNING');
+        }
+    } catch (error) {
+        log('Failed to register commands.', 'ERROR');
+        console.error(error);
+        logErrorToFile(error);
     }
 };
 
 const handleCommands = async (client, commandsPath) => {
+    log(`Starting slash command handler for path: ${chalk.cyan(commandsPath)}`, 'INFO');
     const placeholderTokens = [
         "YOUR_BOT_TOKEN",
         "YOUR_MONGODB_URL",
@@ -213,15 +238,22 @@ const handleCommands = async (client, commandsPath) => {
 
     if (!client.commands) {
         client.commands = new Collection();
+        log(`Initialized commands collection`, 'INFO');
     }
 
     const rest = new REST({ version: '10' }).setToken(config.bot.token);
+    log(`Created REST client with token: ${chalk.cyan(config.bot.token.substring(0, 10))}...`, 'INFO');
+
     const { globalCommandArray, devCommandArray } = loadCommands(client, commandsPath);
+    log(`Loaded ${chalk.green(globalCommandArray.length)} global commands and ${chalk.green(devCommandArray.length)} dev commands`, 'INFO');
+
     await registerCommands(globalCommandArray, devCommandArray, rest, config);
+
     const watcher = chokidar.watch([commandsPath, './src/functions', './src/schemas'], {
         persistent: true,
         ignoreInitial: true,
         awaitWriteFinish: true,
+        depth: 99 // Allow deep directory watching
     });
 
     let timeout;
@@ -231,63 +263,27 @@ const handleCommands = async (client, commandsPath) => {
         await registerCommands(globalCommandArray, devCommandArray, rest, config);
     };
 
+    const debouncedRegisterCommands = debounce(registerDebouncedCommands, 1000);
+
     watcher
         .on('add', (filePath) => {
-            if (filePath.includes('schemas')) {
-                log(`Schema file added: ${formatFilePath(filePath)}`, 'WARNING');
-                return;
+            if (filePath.endsWith('.js')) {
+                log(`New command file added: ${chalk.green(formatFilePath(filePath))}`, 'SUCCESS');
+                debouncedRegisterCommands();
             }
-
-            if (filePath.includes('functions')) {
-                log(`Functions file added: ${formatFilePath(filePath)}`, 'WARNING');
-                return;
-            }
-
-            log(`New command file added: ${formatFilePath(filePath)}`, 'SUCCESS');
-            loadCommand(client, filePath);
-            addActivity('added', filePath);
-            clearTimeout(timeout);
-            timeout = setTimeout(registerDebouncedCommands, 5000);
         })
         .on('change', (filePath) => {
-            if (filePath.includes('schemas')) {
-                log(`Schema file changed: ${formatFilePath(filePath)}`, 'WARNING');
-                return;
+            if (filePath.endsWith('.js')) {
+                log(`Command file changed: ${chalk.blue(formatFilePath(filePath))}`, 'INFO');
+                debouncedRegisterCommands();
             }
-            if (filePath.includes('functions')) {
-                log(`Functions file changed: ${formatFilePath(filePath)}`, 'WARNING')
-                return;
-            }
-
-            log(`Command file changed: ${formatFilePath(filePath)}`, 'INFO');
-            loadCommand(client, filePath);
-            addActivity('changed', filePath);
-            clearTimeout(timeout);
-            timeout = setTimeout(registerDebouncedCommands, 5000);
         })
-        .on('unlink', async (filePath) => {
-            if (filePath.includes('schemas')) {
-                log(`Schema file removed: ${formatFilePath(filePath)}`, 'WARNING');
-                return;
+        .on('unlink', (filePath) => {
+            if (filePath.endsWith('.js')) {
+                log(`Command file removed: ${chalk.red(formatFilePath(filePath))}`, 'ERROR');
+                debouncedRegisterCommands();
             }
-
-            if (filePath.includes('functions')) {
-                log(`Functions file removed: ${formatFilePath(filePath)}`, 'WARNING');
-                return;
-            }
-
-            const commandName = path.basename(filePath, '.js');
-            log(`Command file removed: ${formatFilePath(filePath)}`, 'ERROR');
-            client.commands.delete(commandName);
-            await unregisterCommand(commandName, rest, config, devCommandArray);
-            addActivity('removed', filePath);
-            clearTimeout(timeout);
-            timeout = setTimeout(registerDebouncedCommands, 5000);
         });
-
 };
 
-module.exports = {
-    handleCommands,
-    getActivities
-};
+module.exports = { handleCommands };
