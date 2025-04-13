@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const errorsDir = path.join(__dirname, '../logs/errors');
 const { checkMissingIntents } = require('./Handlers/requiredIntents.js');
+// @ts-ignore
 const { antiCrash } = require('./Handlers/antiCrash.js');
 
 antiCrash();

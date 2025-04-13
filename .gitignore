@@ -135,5 +135,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Code Editor directories
+.vscode
+
 # Temporary Ignore files
 server

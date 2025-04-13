@@ -1,25 +1,44 @@
 {
   "name": "robo-ken",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.0.5",
+  "description": "A Discord bot for Project A - Robo-Ken",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "jest": "jest",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "watch": "chokidar \"src/**/*.js\" -c \"npm run test\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WLappiz/robo-ken.git"
   },
-  "keywords": [],
+  "keywords": [
+    "discord",
+    "bot",
+    "project-a",
+    "robo-ken"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/WLappiz/robo-ken/issues"
   },
   "homepage": "https://github.com/WLappiz/robo-ken#readme",
+  "engines": {
+    "node": "22.14.0"
+  },
   "dependencies": {
+    "chalk": "^5.4.1",
+    "chokidar": "^4.0.3",
     "discord.js": "^14.18.0",
     "dotenv": "^16.5.0",
     "nvm": "^0.0.4"
+  },
+  "devDependencies": {
+    "eslint": "^9.24.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9"
   }
 }
