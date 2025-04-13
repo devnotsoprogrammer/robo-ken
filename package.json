@@ -1,0 +1,25 @@
+{
+  "name": "robot-ken",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WLappiz/robo-ken.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WLappiz/robo-ken/issues"
+  },
+  "homepage": "https://github.com/WLappiz/robo-ken#readme",
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.5.0",
+    "nvm": "^0.0.4"
+  }
+}
