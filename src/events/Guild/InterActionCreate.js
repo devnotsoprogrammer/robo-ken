@@ -4,7 +4,7 @@ const config = require('../../config');
 const path = require('path');
 const fs = require('fs');
 
-const errorsDir = path.join(__dirname, '../../../errors'); // Ensure correct path to the root
+const errorsDir = path.join(__dirname, '../../../logs/errors'); // Ensure correct path to the root
 
 // Function to create the errors directory if it doesn't exist
 function ensureErrorDirectoryExists() {
@@ -84,7 +84,17 @@ module.exports = {
             }
         }
 
-
+        if (command.devOnly) {
+            if (!config.bot.devIds.includes(interaction.user.id)) {
+                const embed = new EmbedBuilder()
+                    .setColor('Blue')
+                    .setDescription(`❌ | This command is only available to developers. You cannot run this command.`)
+            }
+            return await interaction.reply({
+                embeds: [embed],
+                ephemeral: true
+            });
+        }
 
         if (command.botPermissions) {
             const botPermissions = interaction.guild.members.me.permissions;

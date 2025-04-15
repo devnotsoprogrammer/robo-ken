@@ -14,6 +14,14 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('your-command')
         .setDescription('Describe your command here.'),
+    botPermissions: ['SendMessages'],
+    userPermissions: ['ManageMessages'],
+    adminOnly: false,
+    ownerOnly: false,
+    devSev: false,
+    devOnly: false,
+    SVOnly: false,
+    cooldown: 10,
     async execute(interaction, client) {
         // Command execution logic goes here
     }
@@ -24,15 +32,23 @@ const prefixTemplate = `
 //! This is a basic structure for a prefix command in discoBase using discord.js
 
 module.exports = {
-    name: 'command-name',
-    description: 'command-description.',
-    //* Optional: Aliases are alternative names for the command. Example: !p will also trigger the ping command.
-    aliases: ['alaises_1', 'aliases_2'],
-    // The run function is the main logic that gets executed when the command is called.
+    name: "cmd-name",
+    description: "cmd description.",
+    aliases: ['aliases'],
+    botPermissions: ['SendMessages'],
+    userPermissions: ['ManageMessages'],
+    adminOnly: false,
+    ownerOnly: false,
+    devSev: false,
+    devOnly: false,
+    SVOnly: false,
+    cooldown: 10,
     run: async (client, message, args) => {
-        // Command execution logic goes here
+
+        // Your command logic goes here.
+
     },
-};
+}; 
 `;
 
 const eventTemplate = `

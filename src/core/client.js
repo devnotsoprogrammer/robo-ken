@@ -1,5 +1,11 @@
 const { GatewayIntentBits, ShardingManager, ActivityFlags, ActivityType, Collection } = require('discord.js');
 const { Client } = require('discord.js');
+const config = require('../config');
+const Emoji = require('../structure/emoji')
+const Color = require('../structure/color');
+const Utils = require('../utils/utils');
+
+
 
 class Subject extends Client {
     constructor(options) {
@@ -28,7 +34,10 @@ class Subject extends Client {
             partials: ['CHANNEL', 'MESSAGE', 'REACTION', 'USER', 'GUILD_MEMBER'],
 
         });
-        //
+        this.config = config;
+        this.emote = Emoji(this);
+        this.colors = Color(this);
+        this.utils = Utils(this);
     }
 }
 

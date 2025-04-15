@@ -1,7 +1,7 @@
 const { default: chalk } = require("chalk");
 const config = require('../../config');
 const { EmbedBuilder } = require('discord.js');
-const { getSimilarCommands } = require('../../Handlers/Similarity');
+const { getSimilarCommands } = require('../../handlers/Similarity');
 const path = require('path');
 const fs = require('fs');
 const { RateLimiter } = require('discord.js-rate-limiter');
@@ -62,9 +62,32 @@ module.exports = {
         }
 
 
-        if (command.devOnly) {
+        if (command.devSev) {
             if (!config.bot.developerCommandsServerIds.includes(message.guild.id)) {
                 return;
+            }
+        }
+        if (command.devOnly) {
+            if (!config.bot.devIds.includes(message.author.id)) {
+                const embed = new EmbedBuilder()
+                    .setColor('Blue')
+                    .setDescription(`❌ | This command is developer-only. You cannot run this command.`)
+                    .addField('Developer Server', `https://discord.gg/${config.bot.LinkPass}`)
+                return await message.reply({
+                    embeds: [embed]
+                });
+            }
+        }
+
+        if (command.SVOnly) {
+            // It will check that command is used in server only.
+            if (!message.guild) {
+                const embed = new EmbedBuilder()
+                    .setColor('Blue')
+                    .setDescription(`❌ | This command is server-only. You cannot run this command in a DM channel.`)
+                return await message.reply({
+                    embeds: [embed]
+                });
             }
         }
 

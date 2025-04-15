@@ -121,7 +121,7 @@ const loadCommands = (client, commandsPath) => {
         try {
             const command = loadCommand(client, filePath);
             if (command) {
-                if (command.devOnly) {
+                if (command.devSev) {
                     devCommandArray.push(command.data.toJSON());
                     log(`Added to dev commands: ${chalk.green(command.data.name)}`, 'INFO');
                 } else {

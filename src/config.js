@@ -1,4 +1,5 @@
 require('dotenv').config();
+const Jsconfig = require('./config.json');
 
 const config = {
     bot: {
@@ -11,7 +12,14 @@ const config = {
         ownerId: process.env.BOT_OWNER_ID || "BOT_OWNER_ID",
         developerCommandsServerIds: [
             process.env.DEV_SERVER_ID || "ONLY_DEV_COMMANDS_SERVER_IDS"
-        ]
+        ],
+        devIds: Jsconfig.devIds || ["DEV_ID_1", "DEV_ID_2"],
+        staff: Jsconfig.staff || ["STAFF_ID_1", "STAFF_ID_2"],
+        bff: Jsconfig.bff || ["BFF_ID_1", "BFF_ID_2"],
+        BetaTesters: Jsconfig.BetaTesters || ["BETA_TESTER_ID_1", "BETA_TESTER_ID_2"],
+        BetaServers: Jsconfig.BetaServers || ["BETA_SERVER_ID_1", "BETA_SERVER_ID_2"],
+        LinkPass: Jsconfig.LinkPass || "YOUR_LINK_PASS",
+
     },
     database: {
         mongodbUrl: process.env.MONGODB_URL || "YOUR_MONGODB_URL"
