@@ -40,6 +40,16 @@ module.exports = {
             return;
         }
 
+        if (command.SVOnly) {
+            if (!interaction.guildId) {
+                return interaction.reply({
+                    content: "This command can only be used within a guild!",
+                    ephemeral: true
+                });
+            }
+        }
+
+
         if (command.adminOnly) {
             if (!config.bot.admins.includes(interaction.user.id)) {
 

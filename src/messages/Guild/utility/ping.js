@@ -12,7 +12,7 @@ module.exports = {
     cooldown: 10,
     run: async (client, message, args) => {
 
-        // Your command logic goes here.
+        return message.reply("Hello, World!");
 
     },
 }; 

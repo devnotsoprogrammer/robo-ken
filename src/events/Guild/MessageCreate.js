@@ -80,7 +80,6 @@ module.exports = {
         }
 
         if (command.SVOnly) {
-            // It will check that command is used in server only.
             if (!message.guild) {
                 const embed = new EmbedBuilder()
                     .setColor('Blue')

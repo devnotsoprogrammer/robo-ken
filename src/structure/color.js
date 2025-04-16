@@ -1,4 +1,4 @@
-const Color = {
+const color = {
     // Default Embed Color
     DEFAULT: "#37373d",  // A soft Discord gray-blurple
 
@@ -36,4 +36,4 @@ const Color = {
     }
 };
 
-module.exports = Color;
+module.exports = color;

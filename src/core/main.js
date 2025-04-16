@@ -47,16 +47,16 @@ function logErrorToFile(error) {
     }
 
     //Load Events
-    const eventsPath = './events';
+    const eventsPath = '../events';
     await eventsHandler(client, path.join(__dirname, eventsPath));
     checkMissingIntents(client);
 
     //Load Commands
-    const commandsPath = path.join(__dirname, 'commands');
+    const commandsPath = path.join(__dirname, '..', 'commands');
     await handleCommands(client, commandsPath);
 
     //Load Prefix Commands
-    const prefixCommandsPath = path.join(__dirname, 'messages');
+    const prefixCommandsPath = path.join(__dirname, '..', 'messages');
     prefixHandler(client, prefixCommandsPath);
 
 })();

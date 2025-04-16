@@ -141,7 +141,7 @@ package-lock.json
 testtoken.js
 
 # Temporary Ignore files
-server
+web
 
 #Custom Ignore files
 package-lock.json

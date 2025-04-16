@@ -339,19 +339,24 @@ class Utils {
   * @returns {{ success: boolean, embed?: EmbedBuilder }} The result object with a possible error embed.
   */
     checkRoleHierarchy(executor, target, botMember) {
+        // Fallback for members without roles
+        const executorHighestRole = executor.roles.highest || { name: "None", position: -1 };
+        const targetHighestRole = target.roles.highest || { name: "None", position: -1 };
+        const botHighestRole = botMember.roles.highest || { name: "None", position: -1 };
+
         // If the executor is the guild owner, allow the action.
         if (executor.id === executor.guild.ownerId) {
             return { success: true };
         }
 
         // Check if the executor's highest role is lower than or equal to the target's highest role.
-        if (executor.roles.highest.comparePositionTo(target.roles.highest) <= 0) {
+        if (executorHighestRole.position <= targetHighestRole.position) {
             const embed = new EmbedBuilder()
                 .setTitle("Role Hierarchy Check Failed")
                 .setDescription(
                     `You cannot perform this action because your highest role is lower than or equal to the target's highest role.` +
-                    `\n\n**Your Highest Role:** \`${executor.roles.highest.name}\` (Position: ${executor.roles.highest.position})` +
-                    `\n**Target's Highest Role:** \`${target.roles.highest.name}\` (Position: ${target.roles.highest.position})`
+                    `\n\n**Your Highest Role:** \`${executorHighestRole.name}\` (Position: ${executorHighestRole.position})` +
+                    `\n**Target's Highest Role:** \`${targetHighestRole.name}\` (Position: ${targetHighestRole.position})`
                 )
                 .setColor("#ED4245") // Error Red
                 .setTimestamp();
@@ -359,13 +364,13 @@ class Utils {
         }
 
         // Check if the bot's highest role is lower than or equal to the target's highest role.
-        if (botMember.roles.highest.comparePositionTo(target.roles.highest) <= 0) {
+        if (botHighestRole.position <= targetHighestRole.position) {
             const embed = new EmbedBuilder()
                 .setTitle("Role Hierarchy Check Failed")
                 .setDescription(
                     `I cannot perform this action because my highest role is lower than or equal to the target's highest role.` +
-                    `\n\n**My Highest Role:** \`${botMember.roles.highest.name}\` (Position: ${botMember.roles.highest.position})` +
-                    `\n**Target's Highest Role:** \`${target.roles.highest.name}\` (Position: ${target.roles.highest.position})`
+                    `\n\n**My Highest Role:** \`${botHighestRole.name}\` (Position: ${botHighestRole.position})` +
+                    `\n**Target's Highest Role:** \`${targetHighestRole.name}\` (Position: ${targetHighestRole.position})`
                 )
                 .setColor("#ED4245") // Error Red
                 .setTimestamp();
@@ -375,6 +380,7 @@ class Utils {
         // All role checks passed.
         return { success: true };
     }
+
 
 }
 

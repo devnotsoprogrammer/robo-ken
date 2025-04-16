@@ -1,4 +1,4 @@
-const Emoji = {
+const emoji = {
     utility: {
         success: "✅",
         success2: "☑️",
@@ -34,5 +34,4 @@ const Emoji = {
         purge: "🧹",
     }
 }
-
-module.exports = Emoji;
+module.exports = emoji;
