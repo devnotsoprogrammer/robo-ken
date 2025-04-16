@@ -44,7 +44,6 @@ module.exports = {
           } catch (error) {
             message.reply({
               content: "There was an error while executing this command!",
-              ephemeral: true,
             });
           }
 
